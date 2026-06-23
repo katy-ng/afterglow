@@ -1,0 +1,5 @@
+node_modules/
+afterglow-app/node_modules/
+.env
+dist/
+build/

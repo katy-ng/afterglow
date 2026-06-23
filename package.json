@@ -1,0 +1,23 @@
+{
+  "name": "afterglow",
+  "version": "1.0.0",
+  "description": "",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "cd afterglow-app && nump run dev",
+    "electron": "electron electron/main.cjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^42.4.0",
+    "electron-rebuild": "^2.0.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.1",
+    "react-router-dom": "^7.18.0"
+  }
+}
