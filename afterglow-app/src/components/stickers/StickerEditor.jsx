@@ -1,5 +1,5 @@
 import "./StickerEditor.css";
-import { useState } from "react";
+import { useState,  } from "react";
 import { SketchPicker } from "react-color";
 import { Canvas } from "./Canvas"
 
@@ -14,11 +14,14 @@ export function StickerEditor(){
 
     return(
         <div className="editor-component">
-            <SketchPicker 
-                color = { color }
-                onChangeComplete = { changeColor }
-                disableAlpha = { true }
-            /> 
+            <div id="left-container">
+                <SketchPicker 
+                    color = { color }
+                    onChangeComplete = { changeColor }
+                    disableAlpha = { true }
+                /> 
+            </div>
+            
 
             <Canvas color={color} />
 

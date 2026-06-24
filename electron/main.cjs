@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs/promises');
 const { 
     db, 
+    init,
     addUser, getUser, 
     addMixtape, getAllMixtapes, 
     addSong, 
@@ -12,11 +13,15 @@ const {
     addSticker, addStickerPlacement 
 } = require('../backend/data/database.cjs');
 
+// initializes the database and sends path to the folder where the user stores their data/files for the app  
+app.whenReady().then(()=>{
+    db.init(app.getPath("userData"));
+});
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 900,
+    height: 750,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs')
     }

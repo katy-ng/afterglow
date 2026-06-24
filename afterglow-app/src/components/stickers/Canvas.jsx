@@ -1,7 +1,8 @@
 import "./Canvas.css";
 import PropTypes from 'prop-types';
 import { Row } from "./Row";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import html2canvas from "html2canvas";
 
 Canvas.propTypes = {
     color: PropTypes.string.isRequired,
@@ -12,6 +13,8 @@ export function Canvas({color}) {
     const [isDrawing, setIsDrawing] = useState(false); // is user actively drawing?
     const [drawMode, setDrawMode] = useState(true); 
     const [eraseMode, setEraseMode] = useState(false);
+
+    const canvasRef = useRef();
 
     /*  The canvas is a 32x32 2D array of pixels.
         2d arrays don't exist in JS, so we must simulate one by nesting arrays.
@@ -47,6 +50,31 @@ export function Canvas({color}) {
         setPixelColors(Array.from({ length: height }, () => Array(width).fill(null)));
     }
 
+    /* 
+        html2canvas reads the DOM rendered by the pixels <div> (and all child divs like each Pixel and Row component)
+        and saves it to a <canvas> element. Then, the canvas is saved as a Data URL (long text string) and stored in the database.
+    */
+    function saveCanvas(){
+        html2canvas(canvasRef.current, {
+            backgroundColor: null,
+            scale: 1,
+        }).then(async(canvas)=>{
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = false;
+
+            let name = "sticker";
+            const base64 = canvas.toDataURL("image/png").split(",")[1]; //get rid of unwanted prefix by splitting Data URL and taking part w/o prefix
+            await window.db.addSticker(name, base64);
+
+            /* download sticker as png to downloads folder
+            const link = document.createElement("a"); //creates <a> in memory
+            link.download = "sticker.png"; //makes it so clicking <a> triggers a download named sticker.png
+            link.href = canvas.toDataURL("image/png"); //links <a> to the canvas
+            link.click(); //manually clicks <a> so it downloads the canvas
+            */
+        });
+    }
+
     // rows holds the actual Row components, which each hold an array of Pixel components
     // also using Row component for passing pixelColors, rowIndex, setPixelColor, isDrawing, drawMode, eraseMode from Canvas through Row to Pixel
     let rows = [];
@@ -64,37 +92,48 @@ export function Canvas({color}) {
     }
 
     return(
-        <>
+        <div id="canvas-container">
             <div id="canvas">
                 <div 
                     id="pixels"
                     onMouseDown={ () => setIsDrawing(true)}
                     onMouseUp={ () => setIsDrawing(false)}
-                    onMouseLeave={ () => setIsDrawing(false)}>
+                    onMouseLeave={ () => setIsDrawing(false)}
+                    ref={canvasRef} >
                     {rows}
                 </div>
             </div>
 
-            <button 
-                className="canvas-button"
-                onClick = {() => {
-                    if(drawMode){
-                        setDrawMode(false);
-                        setEraseMode(true);
-                    } else if(eraseMode){
-                        setEraseMode(false);
-                        setDrawMode(true);
-                    }
-                }} >
-                {drawMode ? 'Eraser' : 'Pen'}
-            </button>
+            <div id="button-container">
+                <button 
+                    className="canvas-button"
+                    onClick = {() => {
+                        if(drawMode){
+                            setDrawMode(false);
+                            setEraseMode(true);
+                        } else if(eraseMode){
+                            setEraseMode(false);
+                            setDrawMode(true);
+                        }
+                    }} >
+                    {drawMode ? 'Eraser' : 'Pen'}
+                </button>
 
-            <button 
-                className="canvas-button"
-                onClick = {clearCanvas} >
-                Clear
-            </button>
-        </>
+                <button 
+                    className="canvas-button"
+                    onClick = {clearCanvas} >
+                    Clear
+                </button>
+
+                <button 
+                    className="canvas-button"
+                    id="save"
+                    onClick = {saveCanvas} >
+                    Save
+                </button>
+            </div>
+            
+        </div>
         
     );
 }
