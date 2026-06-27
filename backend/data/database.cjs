@@ -2,21 +2,25 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const { app } = require('electron');
 const fs = require("fs");
-const path = require("path");
+
 
 let userDataPath;
 
+
 // Create database file in user's app data folder (or just opens it if already exists)
-const dbPath = path.join(app.getPath('userData'), 'app.db'); 
+const dbPath = path.join(app.getPath('userData'), 'app.db');
 const db = new Database(dbPath);
+
 
 // Enable foriegn keys so tables can access keys from other tables
 db.pragma('foreign_keys = ON');
 
-// Initialize database 
+
+// Initialize database
 function init(dataPath){
     // Get path to the folder where the user stores their data/files for the app
     userDataPath = dataPath;
+
 
     // Define SQL schema string for each table in your database file
     db.exec(`
@@ -26,6 +30,7 @@ function init(dataPath){
             name TEXT NOT NULL
         );
 
+
         CREATE TABLE IF NOT EXISTS mixtapes(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
@@ -33,6 +38,7 @@ function init(dataPath){
             created DATETIME DEFAULT CURRENT_TIMESTAMP,
             status TEXT NOT NULL DEFAULT 'draft'
         );
+
 
         CREATE TABLE IF NOT EXISTS songs(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,6 +52,7 @@ function init(dataPath){
             position INTEGER NOT NULL
         );
 
+
         CREATE TABLE IF NOT EXISTS polaroids (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             song_id INTEGER NOT NULL REFERENCES songs(id),
@@ -55,12 +62,14 @@ function init(dataPath){
             position INTEGER NOT NULL
         );
 
+
         CREATE TABLE IF NOT EXISTS stickers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             image_path TEXT NOT NULL,
             created DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+
 
         CREATE TABLE IF NOT EXISTS sticker_placements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,9 +81,11 @@ function init(dataPath){
             scale REAL DEFAULT 1
         );
 
+
         `
     );
 }
+
 
 // Creates and adds a row to the table users, returns the id of the inserted row
 function addUser(name, email){
@@ -90,6 +101,7 @@ function getUser(email){
         `).get(email);
 }
 
+
 // Creates and adds a row to the table mixtapes, returns the id of the inserted row
 function addMixtape(title, fromID){
     const result = db.prepare(`
@@ -104,6 +116,7 @@ function getAllMixtapes(){
         `).all();
 }
 
+
 // Creates and adds a row to the table songs, returns the id of the inserted row
 function addSong(mixtapeID, youtuberURL, spotifyURL, appleMusicURL, songTitle, songArtist, duration, position){
     const result = db.prepare(`
@@ -111,6 +124,7 @@ function addSong(mixtapeID, youtuberURL, spotifyURL, appleMusicURL, songTitle, s
         `).run(mixtapeID, youtuberURL, spotifyURL, appleMusicURL, songTitle, songArtist, duration, position);
     return result.lastInsertRowid;
 }
+
 
 // Creates and adds a row to the table polaroids, returns the id of the inserted row
 function addPolaroid(songID, imagePath, caption, flipTimestamp, position){
@@ -120,12 +134,14 @@ function addPolaroid(songID, imagePath, caption, flipTimestamp, position){
     return result.lastInsertRowid;
 }
 
-/* 
+
+/*
     Creates a file with unique name and path using the time.
-    Creates the "stickers" folder but recursive:true ensures that if it already exists, don't make another one. 
-    
+    Creates the "stickers" folder but recursive:true ensures that if it already exists, don't make another one.
+   
     Buffer.from(base64Data, "base64") converts the provided base64 Data URL of the canvas from Canvas.jsx to binary
     Writes the binary data to the file path.
+
 
     Stores the user-provided name and file path as a new row in the stickers database.
     Now, the database can access the sticker png file stored in
@@ -134,9 +150,10 @@ function addSticker(name, base64Data){
     const fileName = `sticker_${Date.now()}.png`;
     const stickersDir = path.join(userDataPath, "stickers");
     const filePath = path.join(stickersDir, fileName);
-    
-    fs.mkdirSync(path.join(__dirname, "stickers"), { recursive: true });
+   
+    fs.mkdirSync(stickersDir, { recursive: true });
     fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
+
 
     const result = db.prepare(`
         INSERT INTO stickers (name, image_path) VALUES (?, ?)
@@ -144,9 +161,13 @@ function addSticker(name, base64Data){
     return result.lastInsertRowid;
 }
 
-function getSticker(){
-    
+
+function getAllStickers() {
+    return db.prepare(`
+        SELECT * FROM stickers
+    `).all();
 }
+
 
 // Creates and adds a row to the table sticker_placements, returns the id of the inserted row
 function addStickerPlacement(polaroidID, stickerID, xPercent, yPercent, rotationDegrees, scale){
@@ -157,13 +178,16 @@ function addStickerPlacement(polaroidID, stickerID, xPercent, yPercent, rotation
 }
 
 
+
+
 // List all the data / methods this file can export
-module.exports = { 
-    db, 
+module.exports = {
+    db,
     init,
-    addUser, getUser, 
-    addMixtape, getAllMixtapes, 
-    addSong, 
-    addPolaroid, 
-    addSticker, addStickerPlacement 
+    addUser, getUser,
+    addMixtape, getAllMixtapes,
+    addSong,
+    addPolaroid,
+    addSticker, getAllStickers,
+    addStickerPlacement,
 }
